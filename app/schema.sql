@@ -22,6 +22,10 @@ CREATE TABLE [Users] (
   nationality VARCHAR DEFAULT 'Unknown',
   birthday DATE DEFAULT 'Unknown'
 );
+INSERT INTO Users (username, first_name, last_name, password) 
+ VALUES ('kari', 'Kari', 'Nordman', 'kari');
+INSERT INTO Users (username, first_name, last_name, password) 
+ VALUES ('ola', 'Ola', 'Nordman', 'ola');
 
 -- ---
 -- Table 'Posts'

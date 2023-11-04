@@ -16,13 +16,40 @@
 {% endwith %}
 <!-- If form is defined, iterate over form errors and display them. -->
 {% if form is defined %}
-  {% for _, errors in form.errors.items() %}
-    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-      {{ ', '.join(errors) }}
-      <button type="button"
-              class="btn-close"
-              data-bs-dismiss="alert"
-              aria-label="Close"></button>
-    </div>
-  {% endfor %}
+  {% if form.login is defined and form.login.submit.data %}
+    {% for formname, errors in form.errors.items() %}
+      {% if formname == 'login' %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {{ form[formname].label }}: {% for msg in errors.values() %}{{ msg[0] }} {% endfor %}
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% elif form.register is defined and form.register.submit.data %}
+    {% for formname, errors in form.errors.items() %}
+      {% if formname == 'register' %}
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+          {{ form[formname].label }}: {% for msg in errors.values() %}{{ msg[0] }} {% endfor %}
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="alert"
+                  aria-label="Close"></button>
+        </div>
+      {% endif %}
+    {% endfor %}
+  {% else %}
+    {% for field, errors in form.errors.items() %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ form[field].label }}: {{ ', '.join(errors) }}
+        <button type="button"
+                class="btn-close"
+                data-bs-dismiss="alert"
+                aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+  <!--  form.errors.items() form.login.submit.data -->
 {% endif %}

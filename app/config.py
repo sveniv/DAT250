@@ -17,8 +17,8 @@ import os
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "secret"  # TODO: Use this with wtforms
+    SECRET_KEY = os.environ.get("SECRET_KEY") or "4a63fa17bc96f499045b9826eab190788305905802ceb5df4439d327963e00ab"
     SQLITE3_DATABASE_PATH = "sqlite3.db"  # Path relative to the Flask instance folder
     UPLOADS_FOLDER_PATH = "uploads"  # Path relative to the Flask instance folder
-    ALLOWED_EXTENSIONS = {}  # TODO: Might use this at some point, probably don't want people to upload any file type
-    WTF_CSRF_ENABLED = False  # TODO: I should probably implement this wtforms feature, but it's not a priority
+    ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "gif"}  # Only files with these extentions can be uploaded
+    WTF_CSRF_ENABLED = True  # We are using WTForms for protection against CSRF
