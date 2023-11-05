@@ -10,8 +10,6 @@ from app.database import SQLite3
 
 # from flask_bcrypt import Bcrypt
 
-import werkzeug
-
 # Instantiate and configure the app
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -37,7 +35,5 @@ with app.app_context():
     if not upload_path.exists():
         upload_path.mkdir(parents=True, exist_ok=True)
 
-
 # Import the routes after the app is configured
 from app import routes  # noqa: E402,F401
-

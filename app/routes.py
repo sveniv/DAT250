@@ -20,7 +20,6 @@ from flask_login import login_required
 from werkzeug.utils import secure_filename
 
 
-
 @app.route("/", methods=["GET", "POST"])
 @app.route("/index", methods=["GET", "POST"])
 def index():
@@ -110,21 +109,21 @@ def stream(username: str):
 
     Otherwise, it reads the username from the URL and displays all posts from the user and their friends.
     """
+    # Check if we are logged in as a valid user (authenticaed)
+    if not flask_login.current_user.is_authenticated:
+        return redirect(url_for("logout"))
+    # Check if we are logged in as the correct user (authorized)
+    if flask_login.current_user.username != username:
+        return 'Access denied'
+
     post_form = PostForm()
     get_user = f"""
         SELECT *
         FROM Users
-        WHERE id = ?;
+        WHERE username = ?;
         """
-    user = sqlite.query(get_user, True, flask_login.current_user.id)
+    user = sqlite.query(get_user, True, username)
     
-    # Check if we are logged in as a valid user (authenticaed)
-    if user is None:
-        return redirect(url_for("logout"))
-    # Check if we are logged as the correct user (authorized)
-    if user["username"] != username:
-        return 'Access denied'
-
     if post_form.validate_on_submit():
         filename = secure_filename(post_form.image.data.filename)
         
@@ -172,20 +171,20 @@ def comments(username: str, post_id: int):
 
     Otherwise, it reads the username and post id from the URL and displays all comments for the post.
     """
+    # Check if we are logged in as a valid user (authenticaed)
+    if not flask_login.current_user.is_authenticated:
+        return redirect(url_for("logout"))
+    # Check if we are logged in as the correct user (authorized)
+    if flask_login.current_user.username != username:
+        return 'Access denied'
+    
     comments_form = CommentsForm()
     get_user = f"""
         SELECT *
         FROM Users
-        WHERE id = ?;
+        WHERE username = ?;
         """
-    user = sqlite.query(get_user, True, flask_login.current_user.id)
-    
-    # Check if we are logged in as a valid user (authenticaed)
-    if user is None:
-        return redirect(url_for("logout"))
-    # Check if we are logged as the correct user (authorized)
-    if user["username"] != username:
-        return 'Access denied'
+    user = sqlite.query(get_user, True, username)
 
     if comments_form.validate_on_submit():
         insert_comment = f"""
@@ -221,44 +220,61 @@ def friends(username: str):
 
     Otherwise, it reads the username from the URL and displays all friends of the user.
     """
+    # Check if we are logged in as a valid user (authenticaed)
+    if not flask_login.current_user.is_authenticated:
+        return redirect(url_for("logout"))
+    # Check if we are logged in as the correct user (authorized)
+    if flask_login.current_user.username != username:
+        return 'Access denied'
+    
     friends_form = FriendsForm()
     get_user = f"""
         SELECT *
         FROM Users
-        WHERE id = ?;
+        WHERE username = ?;
         """
-    user = sqlite.query(get_user, True, flask_login.current_user.id)
-    
-    # Check if we are logged in as a valid user (authenticaed)
-    if user is None:
-        return redirect(url_for("logout"))
-    # Check if we are logged as the correct user (authorized)
-    if user["username"] != username:
-        return 'Access denied'
+    user = sqlite.query(get_user, True, username)
 
     if friends_form.validate_on_submit():
+        # Get the user info of the friend we want to add
         get_friend = f"""
             SELECT *
             FROM Users
             WHERE username = ?;
             """
         friend = sqlite.query(get_friend, True, friends_form.username.data)
+        # Get our current friends
         get_friends = f"""
             SELECT f_id
             FROM Friends
             WHERE u_id = ?;
             """
         friends = sqlite.query(get_friends, False, user["id"])
+        # Get the current friends of the friend we want to add
+        friend_friends = None
+        if friend:
+            get_friend_friends = f"""
+                SELECT f_id
+                FROM Friends
+                WHERE u_id = ?;
+                """
+            friend_friends = sqlite.query(get_friend_friends, False, friend["id"])
 
-        # Set this to true to show the request sent message
+        # When this is true the friend-request-sent message will be shown to the user
         friend_request_sent_msg = False
         
         if friend is None:
+            # Don't show that this user doesn't exist
             friend_request_sent_msg = True
         elif friend["id"] == user["id"]:
             flash("You cannot be friends with yourself!", category="warning")
         elif friend["id"] in [friend["f_id"] for friend in friends]:
-            flash("You are already friends with this user!", category="warning")
+            if user["id"] in [friend["f_id"] for friend in friend_friends]:
+                # Only show this message if the friendship is mutual to avoid revealing the existence of users
+                flash("You are already friends with this user!", category="warning")
+            else:
+                # Don't show that this user exists
+                friend_request_sent_msg = True
         else:
             insert_friend = f"""
                 INSERT INTO Friends (u_id, f_id)
@@ -303,7 +319,7 @@ def profile(username: str):
         return redirect(url_for("profile", username=flask_login.current_user.username))
     
     if username != flask_login.current_user.username:
-        # Check if the logged in user are a mutual friend with this user
+        # Check if the logged in user are a mutual friend with this user (two-way friendship)
         get_mutual_friends = f"""
             SELECT * FROM 
                 (SELECT ua.username, fa.u_id, fa.f_id FROM Users AS ua 
