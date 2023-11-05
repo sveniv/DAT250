@@ -20,12 +20,9 @@ CREATE TABLE [Users] (
   music VARCHAR DEFAULT 'Unknown',
   movie VARCHAR DEFAULT 'Unknown',
   nationality VARCHAR DEFAULT 'Unknown',
-  birthday DATE DEFAULT 'Unknown'
+  birthday DATE DEFAULT 'Unknown',
+  hash_salt VARCHAR
 );
-INSERT INTO Users (username, first_name, last_name, password) 
- VALUES ('kari', 'Kari', 'Nordman', 'kari');
-INSERT INTO Users (username, first_name, last_name, password) 
- VALUES ('ola', 'Ola', 'Nordman', 'ola');
 
 -- ---
 -- Table 'Posts'

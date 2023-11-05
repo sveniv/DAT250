@@ -8,6 +8,7 @@ dependencies = [
     "Flask-WTF>=1.1.0",
     "gunicorn>=21.2.0",
     "flask-login>=0.6.3",
+    "Flask-Bcrypt>=1.0.1",
 ]
 requires-python = ">=3.9"
 license = { text = "MIT" }

@@ -5,12 +5,14 @@ It also contains the SQL queries used for communicating with the database.
 """
 import sys
 import os
+import secrets
+import string
 
 from pathlib import Path
 
 from flask import flash, redirect, render_template, send_from_directory, url_for, request
 
-from app import app, sqlite
+from app import app, sqlite, flask_bcrypt
 from app.forms import CommentsForm, FriendsForm, IndexForm, PostForm, ProfileForm
 
 from app.user import User
@@ -41,10 +43,13 @@ def index():
             WHERE username = ?;
             """
         user = sqlite.query(get_user, True, (login_form.username.data))
+        
+        if user:
+            pw_ok = flask_bcrypt.check_password_hash(user["password"], user["hash_salt"] + login_form.password.data + login_form.username.data)
 
-        if user is None or user["password"] != login_form.password.data:
+        if user is None or not pw_ok:
             flash("Sorry, invalid login.", category="warning")
-        elif user["password"] == login_form.password.data:
+        elif pw_ok:
             # Store remember me-cookie
             remember_me = True if request.form.get('login-remember_me') else False
             # Log in the user with flask-login
@@ -75,11 +80,16 @@ def index():
             flash("Could not register a user with that username.", category="warning")
             return render_template("index.html.j2", title="Welcome", form=index_form)
         
+        # Generate cryptographically strong salt and password hash
+        salt_alphabet = string.ascii_letters + string.digits
+        hash_salt = ''.join(secrets.choice(salt_alphabet) for i in range(8))
+        pw_hash = flask_bcrypt.generate_password_hash(hash_salt + register_form.password.data + register_form.username.data)
+        
         insert_user = f"""
-            INSERT INTO Users (username, first_name, last_name, password)
-            VALUES (?, ?, ?, ?);
+            INSERT INTO Users (username, first_name, last_name, password, hash_salt)
+            VALUES (?, ?, ?, ?, ?);
             """
-        sqlite.query(insert_user, False, register_form.username.data, register_form.first_name.data, register_form.last_name.data, register_form.password.data)
+        sqlite.query(insert_user, False, register_form.username.data, register_form.first_name.data, register_form.last_name.data, pw_hash, hash_salt)
         flash("User successfully created!", category="success")
         return redirect(url_for("index"))
 
