@@ -3,12 +3,27 @@
 from pathlib import Path
 from typing import cast
 
+#import sentry_sdk
+
 from flask import Flask
 
 from app.config import Config
 from app.database import SQLite3
 
 from flask_bcrypt import Bcrypt
+
+"""
+sentry_sdk.init(
+    dsn=YOUR_DSN_URL_HERE,
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100%
+    # of sampled transactions.
+    # We recommend adjusting this value in production.
+    profiles_sample_rate=1.0,
+)
+"""
 
 # Instantiate and configure the app
 app = Flask(__name__)

@@ -35,7 +35,7 @@ def index():
     index_form = IndexForm()
     login_form = index_form.login
     register_form = index_form.register
-
+    
     if login_form.validate_on_submit() and login_form.submit.data:
         get_user = f"""
             SELECT *
