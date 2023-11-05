@@ -273,7 +273,7 @@ def friends(username: str):
                 # Only show this message if the friendship is mutual to avoid revealing the existence of users
                 flash("You are already friends with this user!", category="warning")
             else:
-                # Don't show that this user exists
+                # Don't show that this user exists because the friendship isn’t mutual
                 friend_request_sent_msg = True
         else:
             insert_friend = f"""
@@ -283,11 +283,11 @@ def friends(username: str):
             sqlite.query(insert_friend, False, user["id"], friend["id"])
             friend_request_sent_msg = True
         
-        # Show this message regardless if the user exists or not to avoid exposing the existance of users
+        # Show this message regardless if the user exists or not to avoid exposing the existence of users
         if friend_request_sent_msg == True:
             flash("Friend request sent.", category="success")
 
-    # Only select friends that have friended us back
+    # Only select friends that have a mutual friendship with the user
     get_friends = f"""
         SELECT *
         FROM Friends AS f JOIN Users as u ON f.f_id = u.id
@@ -354,4 +354,30 @@ def profile(username: str):
 @login_required
 def uploads(filename):
     """Provides an endpoint for serving uploaded files."""
-    return send_from_directory(Path(app.instance_path) / app.config["UPLOADS_FOLDER_PATH"], filename)
+    user_authorized = False
+    # Get the owner of the file
+    get_owner = f"""
+        SELECT u.username FROM Users AS u 
+        WHERE u.id IN (SELECT p.u_id FROM Posts AS p WHERE p.image = ?)
+    """
+    owner = sqlite.query(get_owner, True, filename)
+    if owner:
+        # Do the user own the file?
+        if flask_login.current_user.username == owner["username"]:
+            user_authorized = True
+        else:
+            # Is the user a mutual friend with the owner of the file?
+            get_mutual_friends = f"""
+                SELECT * FROM 
+                    (SELECT ua.username, fa.u_id, fa.f_id FROM Users AS ua 
+                        JOIN Friends AS fa ON ua.id = fa.u_id WHERE ua.username = ?) AS a 
+                JOIN 
+                    (SELECT ub.username, fb.u_id, fb.f_id FROM Users AS ub 
+                        JOIN Friends AS fb ON ub.id = fb.u_id WHERE ub.username = ?) AS b 
+                ON a.u_id = b.f_id AND b.u_id = a.f_id
+            """
+            user_authorized = sqlite.query(get_mutual_friends, True, owner["username"], flask_login.current_user.username)
+    if user_authorized:
+        return send_from_directory(Path(app.instance_path) / app.config["UPLOADS_FOLDER_PATH"], filename)
+    else:
+        return 'Access denied'

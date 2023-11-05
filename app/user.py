@@ -1,18 +1,13 @@
 """Provides user login management for the Social Insecurity application.
 """
-
 import flask_login
 from flask_login import LoginManager
-
 from app import app, sqlite
-
 
 login_manager = LoginManager(app)
 
-
 class User(flask_login.UserMixin):
     pass
-
 
 """ The user_loader callback is used to reload the user object from the user ID stored in the session.
  It should take the str ID of a user, and return the corresponding user object.
@@ -38,4 +33,4 @@ def user_loader(user_id):
         user.full_name = str(db_user["first_name"]) + " " + str(db_user["last_name"])
         return user
     else:
-        return
+        return None

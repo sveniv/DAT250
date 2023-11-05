@@ -36,8 +36,6 @@ from wtforms import (
 # Validation with wtforms.validators
 from wtforms.validators import InputRequired, DataRequired, Length, EqualTo
 
-# TODO: There was some important security feature that wtforms provides, but I don't remember what; implement it
-
 
 class LoginForm(FlaskForm):
     """Provides the login form for the application."""

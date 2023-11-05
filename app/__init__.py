@@ -17,13 +17,20 @@ app.config.from_object(Config)
 # Instantiate the sqlite database extension
 sqlite = SQLite3(app, schema="schema.sql")
 
-
 # TODO: The passwords are stored in plaintext, this is not secure at all. I should probably use bcrypt or something
 # bcrypt = Bcrypt(app)
 
-# CSRF protection using WTForms
 from flask_wtf.csrf import CSRFProtect
 
+from jinja2 import select_autoescape
+
+app.jinja_env.autoescape = select_autoescape(
+    enabled_extensions=('html', 'j2'),
+    default_for_string=True,
+    default=True
+)
+
+# CSRF protection using WTForms
 csrf = CSRFProtect(app)
 
 # Create the instance and upload folder if they do not exist
